@@ -66,8 +66,9 @@ export const CalculatorScreen: React.FC = () => {
   const tempFactor = getTempFactor(waterTemp);
   const adjustedRate = Number((feedingRate * tempFactor).toFixed(2));
 
-  // Daily Feed Quantity = (Population * ABW * (adjustedRate / 100)) / 1000 kg
-  const dailyFeedKg = Number(((population * abw * (adjustedRate / 100)) / 1000).toFixed(1));
+  // Daily Feed Quantity in Grams and Kg
+  const dailyFeedGrams = Math.round(population * abw * (adjustedRate / 100));
+  const dailyFeedKg = Number((dailyFeedGrams / 1000).toFixed(1));
 
   // Recommended feeds per day
   const feedsPerDay = abw < 5 ? 4 : (abw < 18 ? 4 : 3);
@@ -77,15 +78,16 @@ export const CalculatorScreen: React.FC = () => {
     ? '0.8mm Crumble'
     : (abw < 8 ? '1.2mm Crumble' : (abw < 18 ? '1.5mm Pellet' : '2.0mm Extruded Pellet'));
 
-  // Cost per kg = ₹1,850 / 25kg = ₹74/kg
-  const pricePerKg = 74;
-  const dailyCostInr = Math.round(dailyFeedKg * pricePerKg);
-  const bagCountEstimate = Math.ceil(dailyFeedKg / 25);
+  // Pack economics: 100g pack priced at ₹130
+  const packSizeG = 100;
+  const pricePer100gPack = 130;
+  const dailyPacksEstimate = Math.ceil(dailyFeedGrams / packSizeG);
+  const dailyCostInr = Math.round(dailyPacksEstimate * pricePer100gPack);
 
   // 45-day cycle estimate vs 60-day baseline savings
-  const est45DayFeedTotalKg = Math.round(dailyFeedKg * 42); // weighted average
-  const baseline60DayFeedTotalKg = Math.round(dailyFeedKg * 58 * 1.25); // worse FCR in baseline
-  const estimatedFeedCostSaved = Math.round((baseline60DayFeedTotalKg - est45DayFeedTotalKg) * pricePerKg);
+  const est45DayFeedTotalPacks = Math.round(dailyPacksEstimate * 42);
+  const baseline60DayFeedTotalPacks = Math.round(dailyPacksEstimate * 58 * 1.25);
+  const estimatedFeedCostSaved = Math.round((baseline60DayFeedTotalPacks - est45DayFeedTotalPacks) * pricePer100gPack * 0.7);
   const electricityLaborSaved = 18000; // estimated 15 days aeration + labor
   const totalSavings = estimatedFeedCostSaved + electricityLaborSaved;
 
@@ -299,19 +301,19 @@ export const CalculatorScreen: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">
 
-              {/* Output 1: Daily Feed Qty */}
+              {/* Output 1: Daily Feed Qty in Packs & Kg */}
               <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15">
                 <span className="text-[11px] text-emerald-200 block uppercase font-bold">
                   {t.dailyFeedQty}
                 </span>
                 <div className="mt-1">
                   <span className="text-3xl font-heading font-bold text-[#F2A900]">
-                    {dailyFeedKg}
+                    {dailyPacksEstimate.toLocaleString()}
                   </span>
-                  <span className="text-sm ml-1 text-slate-200 font-semibold">kg / day</span>
+                  <span className="text-sm ml-1 text-slate-200 font-semibold">packs / day</span>
                 </div>
                 <span className="text-[11px] text-slate-300 block mt-1">
-                  ≈ {bagCountEstimate} bags (25kg)
+                  ≈ {dailyFeedKg} kg ({dailyFeedGrams.toLocaleString()} g in 100g packs)
                 </span>
               </div>
 
@@ -327,7 +329,7 @@ export const CalculatorScreen: React.FC = () => {
                   <span className="text-sm ml-1 text-slate-200 font-semibold">times / day</span>
                 </div>
                 <span className="text-[11px] text-slate-300 block mt-1">
-                  ≈ {(dailyFeedKg / feedsPerDay).toFixed(1)} kg / ration
+                  ≈ {Math.ceil(dailyPacksEstimate / feedsPerDay)} packs ({(dailyFeedKg / feedsPerDay).toFixed(1)} kg) / feed
                 </span>
               </div>
 
@@ -342,7 +344,7 @@ export const CalculatorScreen: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-300 block mt-1">
-                  @ ₹74/kg formulated feed
+                  @ ₹130 per 100g pack
                 </span>
               </div>
 

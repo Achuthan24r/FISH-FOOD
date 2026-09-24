@@ -2,6 +2,8 @@ export type UserRole = 'farmer' | 'admin';
 
 export type Language = 'en' | 'ta';
 
+export type ProductCategory = 'fish' | 'carnivorous' | 'shrimp' | 'animals' | 'pets';
+
 export interface User {
   id: string;
   role: UserRole;
@@ -122,13 +124,18 @@ export interface Product {
   name: string;
   tagline: string;
   sku: string;
+  category: ProductCategory;
   targetSpecies: string[];
-  bagWeightKg: number;
-  priceInr: number;
+  packWeightGrams: number; // e.g. 100 for 100g, 1000 for 1kg, 25000 for 25kg
+  packSizeLabel: string; // "100g Pack", "250g Pack", "500g Pack", "1kg Pack", "25kg Bulk Bag"
+  priceInr: number; // e.g. 130 for 100g pack
+  imageUrl?: string;
   crudeProteinPercent: number;
   crudeFatPercent: number;
   crudeFiberPercent: number;
   moisturePercent: number;
+  inStock?: boolean;
+  pelletSizeMm?: string;
   ingredients: Ingredient[];
   benefits: {
     id: string;
@@ -137,7 +144,8 @@ export interface Product {
     metric: string;
     icon: string;
   }[];
-  feedingStages: FeedingStageGuide[];
+  feedingStages?: FeedingStageGuide[];
+  createdAt?: string;
 }
 
 export interface Order {
@@ -148,8 +156,9 @@ export interface Order {
   district: string;
   productId: string;
   productName: string;
-  quantityBags: number;
-  bagSizeKg: number;
+  quantityPacks: number; // e.g. 5 packs
+  packSizeLabel: string; // e.g. "100g Pack"
+  pricePerPackInr: number; // e.g. 130
   totalPriceInr: number;
   deliveryAddress: string;
   status: 'requested' | 'confirmed' | 'dispatched' | 'delivered';
@@ -167,10 +176,12 @@ export interface CalculatorState {
 
 export interface CalculatorResult {
   dailyFeedKg: number;
+  dailyFeedGrams: number;
+  dailyFeedPacks: number; // number of 100g packs needed daily
   feedsPerDay: number;
   feedingRatePercent: number;
   feedSizeMm: string;
   estimatedDailyCostInr: number;
   estimatedCycleCostInr: number;
-  cultureDaysEstimate: number; // 45 days with AquaVigor vs 60 days
+  cultureDaysEstimate: number; // 45 days with CHANNA PELLET vs 60 days
 }

@@ -16,13 +16,17 @@ import {
 } from 'lucide-react';
 
 export const OrdersScreen: React.FC = () => {
-  const { currentUser, orders, refreshOrders, t, showToast } = useApp();
+  const { currentUser, orders, refreshOrders, products, t, showToast } = useApp();
 
-  const product = INITIAL_PRODUCTS[0];
+  const [selectedProductId, setSelectedProductId] = useState<string>(() => {
+    return products[0]?.id || 'prod-channa-100g';
+  });
+
+  const selectedProduct = products.find(p => p.id === selectedProductId) || products[0];
   const userOrders = orders.filter(o => o.userId === currentUser.id);
 
-  // Form State
-  const [quantityBags, setQuantityBags] = useState<number>(20);
+  // Form State (Packs based)
+  const [quantityPacks, setQuantityPacks] = useState<number>(10);
   const [deliveryAddress, setDeliveryAddress] = useState<string>(
     'Survey No. 42/B, Estuary Road, Velankanni Taluk'
   );
@@ -30,13 +34,13 @@ export const OrdersScreen: React.FC = () => {
   const [contactPhone, setContactPhone] = useState<string>(currentUser.phone || '+91 98401 23456');
   const [deliveryNotes, setDeliveryNotes] = useState<string>('Unload near Pond 2 pump house');
 
-  const unitPrice = product.priceInr; // ₹1,850
-  const totalPrice = quantityBags * unitPrice;
+  const unitPrice = selectedProduct?.priceInr || 130;
+  const totalPrice = quantityPacks * unitPrice;
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    if (quantityBags <= 0) {
-      showToast('Please select at least 1 bag', 'error');
+    if (quantityPacks <= 0) {
+      showToast('Please select at least 1 pack', 'error');
       return;
     }
 
@@ -45,17 +49,18 @@ export const OrdersScreen: React.FC = () => {
       farmerName: currentUser.name,
       contactPhone: contactPhone,
       district: district,
-      productId: product.id,
-      productName: product.name,
-      quantityBags: quantityBags,
-      bagSizeKg: product.bagWeightKg,
+      productId: selectedProduct.id,
+      productName: selectedProduct.name,
+      quantityPacks: quantityPacks,
+      packSizeLabel: selectedProduct.packSizeLabel || `${selectedProduct.packWeightGrams}g Pack`,
+      pricePerPackInr: unitPrice,
       totalPriceInr: totalPrice,
       deliveryAddress: `${deliveryAddress}, ${district}`,
       notes: deliveryNotes
     });
 
     refreshOrders();
-    showToast(`Order #${created.id} placed! Agronomy logistic team dispatched confirmation.`, 'success');
+    showToast(`Order #${created.id} placed! ${quantityPacks} packs booked for dispatch.`, 'success');
   };
 
   const getStatusBadge = (status: Order['status']) => {
@@ -112,24 +117,49 @@ export const OrdersScreen: React.FC = () => {
 
           <form onSubmit={handlePlaceOrder} className="space-y-4 text-xs font-medium">
             
-            {/* Product Card Details */}
+            {/* Product Selector */}
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">Select Feed Product & Pack Size</label>
+              <select
+                value={selectedProductId}
+                onChange={(e) => setSelectedProductId(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:border-[#2E7D4F] font-bold text-[#14342A]"
+              >
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} • {p.packSizeLabel || `${p.packWeightGrams}g`} — ₹{p.priceInr}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Selected Product Card Details */}
             <div className="p-3.5 rounded-2xl bg-sand-50 border border-slate-200 flex items-center justify-between">
-              <div>
-                <h4 className="font-bold text-xs text-[#14342A]">CHANNA PELLET™ Complete Nutrition</h4>
-                <p className="text-[11px] text-slate-500">{t.bagSize}</p>
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedProduct?.imageUrl || '/channa_pellet.jpg'}
+                  alt={selectedProduct?.name}
+                  className="w-12 h-12 rounded-xl object-cover border border-slate-200"
+                />
+                <div>
+                  <h4 className="font-bold text-xs text-[#14342A]">{selectedProduct?.name}</h4>
+                  <p className="text-[11px] text-slate-500">
+                    {selectedProduct?.packSizeLabel || `${selectedProduct?.packWeightGrams}g Pack`} • {selectedProduct?.pelletSizeMm || '2mm'}
+                  </p>
+                </div>
               </div>
               <div className="text-right">
-                <span className="font-bold text-sm text-[#2E7D4F]">₹{unitPrice}</span>
-                <span className="text-[10px] text-slate-500 block">per bag</span>
+                <span className="font-bold text-base text-[#2E7D4F]">₹{unitPrice}</span>
+                <span className="text-[10px] text-slate-500 block">per pack</span>
               </div>
             </div>
 
             {/* Quantity Selector */}
             <div>
               <div className="flex justify-between font-bold text-slate-700 mb-1.5">
-                <span>{t.bagCount}</span>
+                <span>Number of Packs</span>
                 <span className="text-emerald-700 text-sm font-bold font-mono">
-                  {quantityBags} Bags ({(quantityBags * 25).toLocaleString()} kg)
+                  {quantityPacks} Packs ({((quantityPacks * (selectedProduct?.packWeightGrams || 100)) / 1000).toFixed(2)} kg total)
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -137,16 +167,16 @@ export const OrdersScreen: React.FC = () => {
                   type="range"
                   min={1}
                   max={100}
-                  value={quantityBags}
-                  onChange={(e) => setQuantityBags(Number(e.target.value))}
+                  value={quantityPacks}
+                  onChange={(e) => setQuantityPacks(Number(e.target.value))}
                   className="flex-1 accent-[#2E7D4F]"
                 />
                 <input
                   type="number"
                   min={1}
                   max={500}
-                  value={quantityBags}
-                  onChange={(e) => setQuantityBags(Math.max(1, Number(e.target.value)))}
+                  value={quantityPacks}
+                  onChange={(e) => setQuantityPacks(Math.max(1, Number(e.target.value)))}
                   className="w-16 px-2 py-1 text-center font-bold text-sm border rounded-lg"
                 />
               </div>
@@ -252,7 +282,9 @@ export const OrdersScreen: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-[#14342A]">{ord.id}</span>
-                        <span className="font-bold text-xs text-slate-600">• {ord.quantityBags} Bags ({ord.quantityBags * 25} kg)</span>
+                        <span className="font-bold text-xs text-slate-600">
+                          • {ord.quantityPacks} Packs ({ord.packSizeLabel || '100g Pack'} @ ₹{ord.pricePerPackInr || 130})
+                        </span>
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
                         {ord.deliveryAddress}

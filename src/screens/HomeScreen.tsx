@@ -215,7 +215,7 @@ export const HomeScreen: React.FC = () => {
               <ShoppingBag className="w-5 h-5" />
             </div>
             <span className="text-xs font-bold text-center">{t.orderFeedAction}</span>
-            <span className="text-[10px] text-slate-500 mt-0.5">25kg moisture bags</span>
+            <span className="text-[10px] text-slate-500 mt-0.5">100g Packs @ ₹130</span>
           </button>
 
           <button

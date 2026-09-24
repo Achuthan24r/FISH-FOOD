@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Feedback, Batch, Order, User } from '../types';
+import { Feedback, Batch, Order, User, Product, ProductCategory } from '../types';
 import { storageService } from '../services/storage';
 import { 
   ResponsiveContainer, 
@@ -34,7 +34,14 @@ import {
   Building2, 
   TrendingUp, 
   X,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  Edit2,
+  Trash2,
+  Package,
+  ShoppingBag,
+  Tag,
+  Check
 } from 'lucide-react';
 
 export const AdminDashboardScreen: React.FC = () => {
@@ -45,6 +52,8 @@ export const AdminDashboardScreen: React.FC = () => {
     refreshFeedback, 
     orders, 
     refreshOrders, 
+    products,
+    refreshProducts,
     t, 
     showToast 
   } = useApp();
@@ -52,11 +61,49 @@ export const AdminDashboardScreen: React.FC = () => {
   const allUsers = storageService.getUsers().filter(u => u.role === 'farmer');
   
   // Table view state
-  const [activeTableTab, setActiveTableTab] = useState<'feedback' | 'farmers' | 'batches' | 'orders'>('feedback');
+  const [activeTableTab, setActiveTableTab] = useState<'feedback' | 'farmers' | 'batches' | 'orders' | 'products'>('feedback');
   const [searchQuery, setSearchQuery] = useState('');
   const [speciesFilter, setSpeciesFilter] = useState('all');
   const [sentimentFilter, setSentimentFilter] = useState('all');
   const [ratingFilter, setRatingFilter] = useState('all');
+  const [productCategoryFilter, setProductCategoryFilter] = useState<string>('all');
+
+  // Product Management Modal State
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [productForm, setProductForm] = useState<{
+    name: string;
+    tagline: string;
+    sku: string;
+    category: ProductCategory;
+    targetSpecies: string;
+    packWeightGrams: number;
+    packSizeLabel: string;
+    priceInr: number;
+    crudeProteinPercent: number;
+    crudeFatPercent: number;
+    crudeFiberPercent: number;
+    moisturePercent: number;
+    pelletSizeMm: string;
+    imageUrl: string;
+    inStock: boolean;
+  }>({
+    name: '',
+    tagline: '',
+    sku: '',
+    category: 'carnivorous',
+    targetSpecies: '',
+    packWeightGrams: 100,
+    packSizeLabel: '100g Pack',
+    priceInr: 130,
+    crudeProteinPercent: 42.0,
+    crudeFatPercent: 8.0,
+    crudeFiberPercent: 3.0,
+    moisturePercent: 9.0,
+    pelletSizeMm: '2 mm',
+    imageUrl: '/channa_pellet.jpg',
+    inStock: true
+  });
 
   // Reply Modal State
   const [replyFeedbackItem, setReplyFeedbackItem] = useState<Feedback | null>(null);
@@ -161,6 +208,18 @@ export const AdminDashboardScreen: React.FC = () => {
     return matchesSearch && matchesSpecies && matchesSentiment && matchesRating;
   });
 
+  // Filtering for Products
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = 
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.tagline && p.tagline.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (p.targetSpecies && p.targetSpecies.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())));
+
+    const matchesCategory = productCategoryFilter === 'all' || p.category === productCategoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
   // Reply handler
   const handleSendReply = (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,6 +238,124 @@ export const AdminDashboardScreen: React.FC = () => {
     storageService.updateFeedbackStatus(fb.id, newStatus);
     refreshFeedback();
     showToast(`Feedback marked as ${newStatus}!`, 'info');
+  };
+
+  // --- Product Management Handlers ---
+  const handleOpenAddProduct = () => {
+    setEditingProductId(null);
+    setProductForm({
+      name: '',
+      tagline: '',
+      sku: `CP-${Date.now().toString().slice(-4)}`,
+      category: 'carnivorous',
+      targetSpecies: '',
+      packWeightGrams: 100,
+      packSizeLabel: '100g Pack',
+      priceInr: 130,
+      crudeProteinPercent: 42.0,
+      crudeFatPercent: 8.0,
+      crudeFiberPercent: 3.0,
+      moisturePercent: 9.0,
+      pelletSizeMm: '2 mm',
+      imageUrl: '/channa_pellet.jpg',
+      inStock: true
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const handleOpenEditProduct = (prod: Product) => {
+    setEditingProductId(prod.id);
+    setProductForm({
+      name: prod.name,
+      tagline: prod.tagline || '',
+      sku: prod.sku,
+      category: prod.category,
+      targetSpecies: prod.targetSpecies ? prod.targetSpecies.join(', ') : '',
+      packWeightGrams: prod.packWeightGrams || 100,
+      packSizeLabel: prod.packSizeLabel || `${prod.packWeightGrams || 100}g Pack`,
+      priceInr: prod.priceInr,
+      crudeProteinPercent: prod.crudeProteinPercent || 40,
+      crudeFatPercent: prod.crudeFatPercent || 7,
+      crudeFiberPercent: prod.crudeFiberPercent || 3,
+      moisturePercent: prod.moisturePercent || 9,
+      pelletSizeMm: prod.pelletSizeMm || '2 mm',
+      imageUrl: prod.imageUrl || '/channa_pellet.jpg',
+      inStock: prod.inStock !== false
+    });
+    setIsProductModalOpen(true);
+  };
+
+  const handleSaveProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!productForm.name.trim()) {
+      showToast('Please enter product name', 'error');
+      return;
+    }
+
+    const speciesArray = productForm.targetSpecies
+      ? productForm.targetSpecies.split(',').map(s => s.trim()).filter(Boolean)
+      : ['Fish'];
+
+    if (editingProductId) {
+      storageService.updateProduct(editingProductId, {
+        name: productForm.name,
+        tagline: productForm.tagline,
+        sku: productForm.sku,
+        category: productForm.category,
+        targetSpecies: speciesArray,
+        packWeightGrams: Number(productForm.packWeightGrams),
+        packSizeLabel: productForm.packSizeLabel,
+        priceInr: Number(productForm.priceInr),
+        crudeProteinPercent: Number(productForm.crudeProteinPercent),
+        crudeFatPercent: Number(productForm.crudeFatPercent),
+        crudeFiberPercent: Number(productForm.crudeFiberPercent),
+        moisturePercent: Number(productForm.moisturePercent),
+        pelletSizeMm: productForm.pelletSizeMm,
+        imageUrl: productForm.imageUrl || '/channa_pellet.jpg',
+        inStock: productForm.inStock
+      });
+      showToast(`Product "${productForm.name}" updated!`, 'success');
+    } else {
+      storageService.addProduct({
+        name: productForm.name,
+        tagline: productForm.tagline,
+        sku: productForm.sku || `CP-${Date.now().toString().slice(-4)}`,
+        category: productForm.category,
+        targetSpecies: speciesArray,
+        packWeightGrams: Number(productForm.packWeightGrams),
+        packSizeLabel: productForm.packSizeLabel || `${productForm.packWeightGrams}g Pack`,
+        priceInr: Number(productForm.priceInr),
+        crudeProteinPercent: Number(productForm.crudeProteinPercent),
+        crudeFatPercent: Number(productForm.crudeFatPercent),
+        crudeFiberPercent: Number(productForm.crudeFiberPercent),
+        moisturePercent: Number(productForm.moisturePercent),
+        pelletSizeMm: productForm.pelletSizeMm,
+        imageUrl: productForm.imageUrl || '/channa_pellet.jpg',
+        inStock: productForm.inStock,
+        ingredients: [],
+        benefits: []
+      });
+      showToast(`New product "${productForm.name}" added to catalog!`, 'success');
+    }
+
+    refreshProducts();
+    setIsProductModalOpen(false);
+  };
+
+  const handleDeleteProduct = (productId: string, productName: string) => {
+    if (window.confirm(`Are you sure you want to remove "${productName}" from the catalog?`)) {
+      storageService.deleteProduct(productId);
+      refreshProducts();
+      showToast(`Removed product "${productName}"`, 'info');
+    }
+  };
+
+  const handleToggleProductStock = (prod: Product) => {
+    const updated = storageService.updateProduct(prod.id, { inStock: !prod.inStock });
+    if (updated) {
+      refreshProducts();
+      showToast(`${prod.name} marked as ${updated.inStock ? 'In Stock' : 'Out of Stock'}`, 'info');
+    }
   };
 
   // CSV Export for Hackathon Judges / Corporate Reporting
@@ -205,11 +382,17 @@ export const AdminDashboardScreen: React.FC = () => {
       rows = batches.map(b => 
         `"${b.id}","${b.batchName}","${b.pondName}","${b.species}",${b.stockingCount},"${b.feedType}",${b.currentWeightG},${b.currentSurvivalRate},${b.currentFCR},"${b.status}","${b.stockingDate}"`
       );
+    } else if (activeTableTab === 'products') {
+      filename = 'CHANNA_PELLET_Products_Catalog.csv';
+      headers = 'Product ID,Name,Category,Pack Size,Price INR,Protein %,Fat %,Fiber %,In Stock\n';
+      rows = products.map(p => 
+        `"${p.id}","${p.name}","${p.category}","${p.packSizeLabel || `${p.packWeightGrams}g`}",${p.priceInr},${p.crudeProteinPercent},${p.crudeFatPercent},${p.crudeFiberPercent},"${p.inStock !== false ? 'Yes' : 'No'}"`
+      );
     } else {
       filename = 'CHANNA_PELLET_Orders_Export.csv';
-      headers = 'Order ID,Farmer Name,District,Quantity Bags,Total Price INR,Delivery Address,Status,Created Date\n';
+      headers = 'Order ID,Farmer Name,District,Quantity Packs,Pack Size,Total Price INR,Delivery Address,Status,Created Date\n';
       rows = orders.map(o => 
-        `"${o.id}","${o.farmerName}","${o.district}",${o.quantityBags},${o.totalPriceInr},"${o.deliveryAddress}","${o.status}","${o.createdAt.split('T')[0]}"`
+        `"${o.id}","${o.farmerName}","${o.district}",${o.quantityPacks},"${o.packSizeLabel}",${o.totalPriceInr},"${o.deliveryAddress}","${o.status}","${o.createdAt.split('T')[0]}"`
       );
     }
 
@@ -543,6 +726,16 @@ export const AdminDashboardScreen: React.FC = () => {
             >
               {t.adminTableOrders} ({orders.length})
             </button>
+            <button
+              onClick={() => setActiveTableTab('products')}
+              id="tab-admin-products"
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                activeTableTab === 'products' ? 'bg-white text-[#14342A] shadow-sm' : 'text-slate-600'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5 text-[#2E7D4F]" />
+              <span>Products Catalog ({products.length})</span>
+            </button>
           </div>
 
           {/* Search Input */}
@@ -557,6 +750,44 @@ export const AdminDashboardScreen: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* Specific Filters and Add Button for Products */}
+        {activeTableTab === 'products' && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 text-slate-500 font-semibold">
+                <Filter className="w-3.5 h-3.5" />
+                <span>Category:</span>
+              </div>
+
+              <select
+                value={productCategoryFilter}
+                onChange={(e) => setProductCategoryFilter(e.target.value)}
+                className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-semibold outline-none focus:border-[#2E7D4F]"
+              >
+                <option value="all">All Categories ({products.length})</option>
+                <option value="carnivorous">Carnivorous Fish (Channa / Murrel)</option>
+                <option value="shrimp">Shrimp & Crustaceans</option>
+                <option value="fish">Fish & Aquaculture</option>
+                <option value="animals">Farm & Animal Feeds (Future Line)</option>
+                <option value="pets">Pet Nutrition (Dogs, Birds, Cats)</option>
+              </select>
+
+              <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+                🐟 Aqua Food (Primary) • 🐾 Animal Food (Expansion Ready)
+              </span>
+            </div>
+
+            <button
+              onClick={handleOpenAddProduct}
+              id="btn-admin-add-product"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2E7D4F] hover:bg-[#215c3a] text-white text-xs font-bold shadow-md transition self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Product</span>
+            </button>
+          </div>
+        )}
 
         {/* Specific Filters for Feedback */}
         {activeTableTab === 'feedback' && (
@@ -790,7 +1021,7 @@ export const AdminDashboardScreen: React.FC = () => {
                     <td className="py-3 px-3 font-mono font-bold text-[#14342A]">{o.id}</td>
                     <td className="py-3 px-3 font-semibold text-slate-800">{o.farmerName}</td>
                     <td className="py-3 px-3 text-slate-600">{o.district}</td>
-                    <td className="py-3 px-3 font-bold">{o.quantityBags} Bags</td>
+                    <td className="py-3 px-3 font-bold">{o.quantityPacks} Packs ({o.packSizeLabel || '100g'})</td>
                     <td className="py-3 px-3 font-bold text-emerald-700">₹{o.totalPriceInr.toLocaleString()}</td>
                     <td className="py-3 px-3">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 uppercase">
@@ -820,7 +1051,407 @@ export const AdminDashboardScreen: React.FC = () => {
           </div>
         )}
 
+        {/* TAB 5: PRODUCTS CATALOG TABLE & MANAGEMENT */}
+        {activeTableTab === 'products' && (
+          <div className="overflow-x-auto space-y-4">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-sand-50 border-b border-slate-200 text-[#14342A]">
+                  <th className="py-3 px-4 font-bold">Product Item</th>
+                  <th className="py-3 px-4 font-bold">Category</th>
+                  <th className="py-3 px-4 font-bold">Pack Size & Pricing</th>
+                  <th className="py-3 px-4 font-bold">Target Species</th>
+                  <th className="py-3 px-4 font-bold">Nutritional Analysis</th>
+                  <th className="py-3 px-4 font-bold">Status</th>
+                  <th className="py-3 px-4 font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredProducts.map((prod) => (
+                  <tr key={prod.id} className="hover:bg-slate-50/80 transition">
+                    
+                    {/* Product Name & SKU */}
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={prod.imageUrl || '/channa_pellet.jpg'}
+                          alt={prod.name}
+                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0 shadow-sm"
+                        />
+                        <div>
+                          <span className="font-bold text-slate-900 block text-xs sm:text-sm">{prod.name}</span>
+                          <span className="text-[11px] text-slate-500 font-mono block">
+                            SKU: {prod.sku} • {prod.pelletSizeMm || 'Pellet'}
+                          </span>
+                          {prod.tagline && (
+                            <p className="text-[10px] text-slate-500 line-clamp-1 max-w-xs">{prod.tagline}</p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Category */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 ${
+                        prod.category === 'animals' || prod.category === 'pets'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                      }`}>
+                        {prod.category === 'animals' ? '🐾 Animal Feed' : 
+                         prod.category === 'pets' ? '🐶 Pet Nutrition' : 
+                         prod.category === 'carnivorous' ? '🐟 Carnivorous Fish' : 
+                         prod.category === 'shrimp' ? '🦐 Shrimp Feed' : '🐟 Aqua Feed'}
+                      </span>
+                    </td>
+
+                    {/* Pack Size & Price (Highlighting 100g at ₹130) */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5 font-bold text-[#14342A]">
+                        <Tag className="w-3.5 h-3.5 text-[#2E7D4F]" />
+                        <span>{prod.packSizeLabel || `${prod.packWeightGrams}g Pack`}</span>
+                      </div>
+                      <div className="mt-0.5">
+                        <span className="font-bold text-emerald-700 text-sm">
+                          ₹{prod.priceInr.toLocaleString()}
+                        </span>
+                        <span className="text-[10px] text-slate-500 ml-1">
+                          / pack
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* Target Species */}
+                    <td className="py-3.5 px-4 text-slate-600 max-w-xs">
+                      <span className="text-xs font-medium">
+                        {prod.targetSpecies && prod.targetSpecies.length > 0
+                          ? prod.targetSpecies.join(', ')
+                          : 'General Aquaculture'}
+                      </span>
+                    </td>
+
+                    {/* Nutritional Analysis */}
+                    <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                      <div className="text-[11px] space-y-0.5">
+                        <span className="font-bold text-[#14342A] block">Protein: {prod.crudeProteinPercent}%</span>
+                        <span className="text-slate-500 block">Fat: {prod.crudeFatPercent}% | Fiber: {prod.crudeFiberPercent}%</span>
+                      </div>
+                    </td>
+
+                    {/* Stock Status Toggle */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <button
+                        onClick={() => handleToggleProductStock(prod)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1.5 ${
+                          prod.inStock !== false
+                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                            : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full ${prod.inStock !== false ? 'bg-emerald-600' : 'bg-rose-600'}`} />
+                        <span>{prod.inStock !== false ? 'In Stock' : 'Out of Stock'}</span>
+                      </button>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => handleOpenEditProduct(prod)}
+                          title="Edit Product"
+                          className="p-1.5 text-slate-600 hover:text-[#2E7D4F] hover:bg-emerald-50 rounded-lg transition"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(prod.id, prod.name)}
+                          title="Delete Product"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <Package className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                <p className="text-xs text-slate-600 font-bold">No products match your search or filter.</p>
+                <button
+                  onClick={handleOpenAddProduct}
+                  className="mt-3 px-4 py-2 bg-[#2E7D4F] text-white text-xs font-bold rounded-xl"
+                >
+                  + Add First Product
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
+
+      {/* --- ADD / EDIT PRODUCT MODAL --- */}
+      {isProductModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h3 className="font-heading font-bold text-base text-[#14342A] flex items-center gap-2">
+                <Package className="w-5 h-5 text-[#2E7D4F]" />
+                <span>{editingProductId ? 'Edit Product Details' : 'Add New Product to Catalog'}</span>
+              </h3>
+              <button 
+                onClick={() => setIsProductModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProduct} className="space-y-4 pt-4 text-xs font-medium">
+              
+              {/* Product Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Product Name *
+                </label>
+                <input
+                  type="text"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  placeholder="e.g. CHANNA PELLET™ 100g Retail Pack"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none focus:border-[#2E7D4F]"
+                  required
+                />
+              </div>
+
+              {/* Tagline */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Tagline / Description
+                </label>
+                <input
+                  type="text"
+                  value={productForm.tagline}
+                  onChange={(e) => setProductForm({ ...productForm, tagline: e.target.value })}
+                  placeholder="Complete Nutrition for Carnivorous Fish • High Protein • Boosts Immunity"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none focus:border-[#2E7D4F]"
+                />
+              </div>
+
+              {/* Category & Pellet Size */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Category (Fish vs Animal) *
+                  </label>
+                  <select
+                    value={productForm.category}
+                    onChange={(e) => setProductForm({ ...productForm, category: e.target.value as ProductCategory })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#2E7D4F]"
+                  >
+                    <option value="carnivorous">🐟 Carnivorous Fish (Channa / Murrel)</option>
+                    <option value="fish">🐟 Fish & Aquaculture</option>
+                    <option value="shrimp">🦐 Shrimp & Crustaceans</option>
+                    <option value="animals">🐾 Farm Animals (Cattle, Poultry, Goat)</option>
+                    <option value="pets">🐶 Pet Food (Dogs, Cats, Birds)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Pellet / Crumb / Kibble Size
+                  </label>
+                  <input
+                    type="text"
+                    value={productForm.pelletSizeMm}
+                    onChange={(e) => setProductForm({ ...productForm, pelletSizeMm: e.target.value })}
+                    placeholder="e.g. 2 mm, 1.5mm, or Extruded Kibble"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none focus:border-[#2E7D4F]"
+                  />
+                </div>
+              </div>
+
+              {/* Pack Size, Weight & Price (100g pack @ ₹130) */}
+              <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-200/80 space-y-3">
+                <span className="text-xs font-bold text-emerald-900 block flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-[#2E7D4F]" />
+                  <span>Packaging & Retail Pricing</span>
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Pack Size Label *
+                    </label>
+                    <input
+                      type="text"
+                      value={productForm.packSizeLabel}
+                      onChange={(e) => setProductForm({ ...productForm, packSizeLabel: e.target.value })}
+                      placeholder="e.g. 100g Pack"
+                      className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#2E7D4F]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Weight in Grams *
+                    </label>
+                    <input
+                      type="number"
+                      value={productForm.packWeightGrams}
+                      onChange={(e) => setProductForm({ ...productForm, packWeightGrams: Number(e.target.value) })}
+                      placeholder="100"
+                      className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#2E7D4F]"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      Price in INR (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      value={productForm.priceInr}
+                      onChange={(e) => setProductForm({ ...productForm, priceInr: Number(e.target.value) })}
+                      placeholder="130"
+                      className="w-full px-3 py-1.5 rounded-xl border border-slate-300 bg-white outline-none focus:border-[#2E7D4F] font-bold text-emerald-800"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-emerald-800">
+                  Default Retail Standard: <strong>100g Pack @ ₹130</strong>
+                </div>
+              </div>
+
+              {/* Target Species & SKU */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Target Species (Comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={productForm.targetSpecies}
+                    onChange={(e) => setProductForm({ ...productForm, targetSpecies: e.target.value })}
+                    placeholder="Channa / Murrel, Seabass, Monster Fishes"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none focus:border-[#2E7D4F]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Product SKU Code
+                  </label>
+                  <input
+                    type="text"
+                    value={productForm.sku}
+                    onChange={(e) => setProductForm({ ...productForm, sku: e.target.value })}
+                    placeholder="e.g. CP-2MM-100G"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 outline-none focus:border-[#2E7D4F] font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Guaranteed Analysis Breakdown */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1">Protein %</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={productForm.crudeProteinPercent}
+                    onChange={(e) => setProductForm({ ...productForm, crudeProteinPercent: Number(e.target.value) })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1">Fat %</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={productForm.crudeFatPercent}
+                    onChange={(e) => setProductForm({ ...productForm, crudeFatPercent: Number(e.target.value) })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1">Fiber %</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={productForm.crudeFiberPercent}
+                    onChange={(e) => setProductForm({ ...productForm, crudeFiberPercent: Number(e.target.value) })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 mb-1">Moisture %</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={productForm.moisturePercent}
+                    onChange={(e) => setProductForm({ ...productForm, moisturePercent: Number(e.target.value) })}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Image URL & Stock */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Image URL</label>
+                  <input
+                    type="text"
+                    value={productForm.imageUrl}
+                    onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })}
+                    placeholder="/channa_pellet.jpg"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none"
+                  />
+                </div>
+                <div className="pt-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={productForm.inStock}
+                      onChange={(e) => setProductForm({ ...productForm, inStock: e.target.checked })}
+                      className="w-4 h-4 text-[#2E7D4F] rounded border-slate-300 focus:ring-[#2E7D4F]"
+                    />
+                    <span className="text-xs font-bold text-slate-700">In Stock Now</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Form Buttons */}
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsProductModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  id="btn-save-product-submit"
+                  className="px-6 py-2.5 rounded-xl bg-[#2E7D4F] hover:bg-[#215c3a] text-white text-xs font-bold shadow-md transition flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>{editingProductId ? 'Update Product' : 'Add to Catalog'}</span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* --- INLINE REPLY MODAL --- */}
       {replyFeedbackItem && (

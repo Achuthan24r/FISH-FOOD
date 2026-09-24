@@ -19,54 +19,59 @@ const STORAGE_KEYS = {
 // -------------------------------------------------------------
 export const INITIAL_PRODUCTS: Product[] = [
   {
-    id: 'prod-channa-pellet-01',
-    name: 'CHANNA PELLET™ Complete Nutrition for Carnivorous Fish',
-    tagline: 'Premium Fish Food for Monster Fishes • High Protein • Enhances Colour • Boosts Immunity • Easy Digestion • 2mm Pellet',
+    id: 'prod-channa-100g',
+    name: 'CHANNA PELLET™ 100g Retail Pack (2mm Pellet)',
+    tagline: 'Complete Nutrition for Carnivorous Fish & Monster Fishes • Enhances Colour • Boosts Immunity',
     sku: 'CP-2MM-100G',
-    targetSpecies: ['Channa / Murrel', 'Vannamei Shrimp', 'Asian Seabass', 'GIFT Tilapia', 'Catfish'],
-    bagWeightKg: 25,
-    priceInr: 1850,
+    category: 'carnivorous',
+    targetSpecies: ['Channa / Murrel (விரால்)', 'Asian Seabass', 'Carnivorous Fish', 'Monster Fishes'],
+    packWeightGrams: 100,
+    packSizeLabel: '100g Pack',
+    priceInr: 130, // 100g pack price ₹130!
+    imageUrl: '/channa_pellet.jpg',
+    pelletSizeMm: '2 mm',
     crudeProteinPercent: 42.0,
     crudeFatPercent: 8.0,
     crudeFiberPercent: 3.0,
     moisturePercent: 9.0,
+    inStock: true,
     ingredients: [
       {
         name: 'High-Grade Steam-Dried Fish Meal',
         percentage: 20,
-        role: 'Concentrated source of essential digestible marine protein, EPA, DHA, and highly bioavailable peptides for accelerated growth.',
+        role: 'Concentrated source of digestible marine protein, EPA, DHA, and highly bioavailable peptides.',
         category: 'marine_protein'
       },
       {
         name: 'Whole Squid Meal (Loligo edulis)',
         percentage: 20,
-        role: 'Potent chemo-attractant, natural sterols, and cellular growth catalyst that stimulates continuous feed consumption and hepatopancreas health.',
+        role: 'Potent chemo-attractant, natural sterols, and cellular growth catalyst for aggressive feeding.',
         category: 'marine_protein'
       },
       {
         name: 'Jawla Meal (Acetes indicus)',
         percentage: 10,
-        role: 'Natural source of astaxanthin carotenoids for deep vivid body pigmentation and prebiotic chitin for cuticle hardness and immune defense.',
+        role: 'Natural source of astaxanthin carotenoids for deep vivid body pigmentation and prebiotic chitin.',
         category: 'marine_protein'
       },
       {
         name: 'De-oiled Groundnut Cake Powder',
-        role: 'High-density, low-fiber digestible vegetable protein with balanced arginine profile supporting steady muscle accretion.',
+        role: 'High-density, low-fiber vegetable protein with balanced arginine profile.',
         category: 'plant_protein'
       },
       {
         name: 'Dehulled Soya Bean Meal (Hi-Pro)',
-        role: 'Core amino acid balancer supplying critical lysine and methionine equivalents for optimal protein retention efficiency.',
+        role: 'Core amino acid balancer supplying critical lysine and methionine equivalents.',
         category: 'plant_protein'
       },
       {
         name: 'Gelatinized Rice Flour & Extruded Corn Flour',
-        role: 'Hydrothermally processed binding matrix guaranteeing over 3.5 hours of underwater pellet stability without nutrient leaching.',
+        role: 'Hydrothermally processed binding matrix guaranteeing over 3.5 hours of underwater pellet stability.',
         category: 'plant_protein'
       },
       {
         name: 'Multi-Enzyme Complex (Protease, Amylase, Lipase, Phytase)',
-        role: 'Enhances hydrolytic breakdown of complex proteins and carbohydrates, lowering FCR and significantly reducing bottom sludge.',
+        role: 'Enhances hydrolytic breakdown of complex proteins and carbohydrates, lowering waste.',
         category: 'functional_additive'
       },
       {
@@ -76,7 +81,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       },
       {
         name: 'Chelated Mineral & Fortified Vitamin Premix',
-        role: 'Bioavailable Zinc, Selenium, Magnesium, Vitamin C (Stay-C), and Vitamin E to maximize stress resilience and disease immunity against WSSV/Vibrio.',
+        role: 'Bioavailable Zinc, Selenium, Magnesium, Vitamin C (Stay-C), and Vitamin E for disease immunity.',
         category: 'micronutrient'
       }
     ],
@@ -84,28 +89,28 @@ export const INITIAL_PRODUCTS: Product[] = [
       {
         id: 'b-growth',
         title: 'Accelerated 45-Day Harvest',
-        description: 'Reduces culture period from standard 60 days down to 45 days, saving 15 days of operating overhead, aeration electricity, and labor.',
+        description: 'Reduces culture period from standard 60 days down to 45 days, saving 15 days of operating overhead and power.',
         metric: '15 Days Faster',
         icon: 'Zap'
       },
       {
         id: 'b-colour',
         title: 'Lustrous Natural Colouration',
-        description: 'Rich in organic astaxanthin from 10% Jawla meal and squid sterols, fetching a 15-20% price premium at harvest auctions.',
+        description: 'Rich in organic astaxanthin from 10% Jawla meal and squid sterols, fetching high market premium.',
         metric: '4.8/5 Color Index',
         icon: 'Sparkles'
       },
       {
         id: 'b-survival',
         title: 'Superior >92% Survival Rate',
-        description: 'Chitin-rich bioactives and clean water stability suppress pathogenic bacterial proliferation, drastically cutting juvenile mortality.',
+        description: 'Chitin-rich bioactives and clean water stability suppress pathogenic bacterial proliferation.',
         metric: '93.4% Avg Survival',
         icon: 'ShieldCheck'
       },
       {
         id: 'b-immunity',
         title: 'Robust Disease Immunity & Vigor',
-        description: 'Chelated trace minerals and multi-enzymes reinforce gut microflora integrity and stress resistance against temperature fluctuations.',
+        description: 'Chelated trace minerals and multi-enzymes reinforce gut microflora integrity and stress resistance.',
         metric: '1.18 Target FCR',
         icon: 'Activity'
       }
@@ -114,7 +119,7 @@ export const INITIAL_PRODUCTS: Product[] = [
       {
         stage: 'Starter (Nursery to Juvenile)',
         bodyWeightRange: '0.5g – 4.0g',
-        feedCode: 'AV-Crumb-01',
+        feedCode: 'CP-Crumb-01',
         feedType: 'Crumble 0.8mm – 1.2mm',
         feedingRatePercent: '7.0% – 5.5% of body weight',
         frequencyPerDay: 4
@@ -122,20 +127,140 @@ export const INITIAL_PRODUCTS: Product[] = [
       {
         stage: 'Grower (Mid-Culture Rapid Phase)',
         bodyWeightRange: '4.0g – 18.0g',
-        feedCode: 'AV-Pellet-02',
-        feedType: 'Short Pellet 1.5mm',
+        feedCode: 'CP-Pellet-02',
+        feedType: '2 mm Pellet',
         feedingRatePercent: '4.8% – 3.2% of body weight',
         frequencyPerDay: 4
       },
       {
         stage: 'Finisher (Pre-Harvest Prime)',
-        bodyWeightRange: '18.0g – 32.0g',
-        feedCode: 'AV-Pellet-03',
-        feedType: 'Firm Extruded Pellet 1.8mm – 2.0mm',
+        bodyWeightRange: '18.0g – 35.0g',
+        feedCode: 'CP-Pellet-03',
+        feedType: '2 mm Formulated Pellet',
         feedingRatePercent: '2.8% – 2.2% of body weight',
         frequencyPerDay: 3
       }
     ]
+  },
+  {
+    id: 'prod-channa-250g',
+    name: 'CHANNA PELLET™ 250g Medium Pouch (2mm Pellet)',
+    tagline: 'Medium Grower Pack for Carnivorous Ponds & Tank Cultivation',
+    sku: 'CP-2MM-250G',
+    category: 'carnivorous',
+    targetSpecies: ['Channa / Murrel', 'Asian Seabass', 'Monster Fishes'],
+    packWeightGrams: 250,
+    packSizeLabel: '250g Pack',
+    priceInr: 300,
+    imageUrl: '/channa_pellet.jpg',
+    pelletSizeMm: '2 mm',
+    crudeProteinPercent: 42.0,
+    crudeFatPercent: 8.0,
+    crudeFiberPercent: 3.0,
+    moisturePercent: 9.0,
+    inStock: true,
+    ingredients: [],
+    benefits: []
+  },
+  {
+    id: 'prod-channa-500g',
+    name: 'CHANNA PELLET™ 500g Value Pack (2mm Pellet)',
+    tagline: 'High-Efficiency Value Pack for Commercial Aquarists & Small Ponds',
+    sku: 'CP-2MM-500G',
+    category: 'carnivorous',
+    targetSpecies: ['Channa / Murrel', 'Asian Seabass', 'Monster Fishes'],
+    packWeightGrams: 500,
+    packSizeLabel: '500g Pack',
+    priceInr: 550,
+    imageUrl: '/channa_pellet.jpg',
+    pelletSizeMm: '2 mm',
+    crudeProteinPercent: 42.0,
+    crudeFatPercent: 8.0,
+    crudeFiberPercent: 3.0,
+    moisturePercent: 9.0,
+    inStock: true,
+    ingredients: [],
+    benefits: []
+  },
+  {
+    id: 'prod-channa-1kg',
+    name: 'CHANNA PELLET™ 1kg Farm Pouch (2mm Pellet)',
+    tagline: 'Farmer Economy 1kg Pouch with Heavy Duty Resealable Zip Lock',
+    sku: 'CP-2MM-1KG',
+    category: 'carnivorous',
+    targetSpecies: ['Channa / Murrel', 'Vannamei Shrimp', 'Asian Seabass'],
+    packWeightGrams: 1000,
+    packSizeLabel: '1kg Pack',
+    priceInr: 990,
+    imageUrl: '/channa_pellet.jpg',
+    pelletSizeMm: '2 mm',
+    crudeProteinPercent: 42.0,
+    crudeFatPercent: 8.0,
+    crudeFiberPercent: 3.0,
+    moisturePercent: 9.0,
+    inStock: true,
+    ingredients: [],
+    benefits: []
+  },
+  {
+    id: 'prod-aquaspectrum-shrimp',
+    name: 'AQUA-SPECTRUM™ High-Protein Shrimp & Fish Feed (100g Pack)',
+    tagline: 'Multi-Species Aqua Feed with Squid Sterols and Chitin Matrix',
+    sku: 'AS-FUNC-100G',
+    category: 'shrimp',
+    targetSpecies: ['Vannamei Shrimp', 'Black Tiger Shrimp', 'GIFT Tilapia'],
+    packWeightGrams: 100,
+    packSizeLabel: '100g Pack',
+    priceInr: 120,
+    imageUrl: '/channa_pellet.jpg',
+    pelletSizeMm: '1.5 mm',
+    crudeProteinPercent: 40.0,
+    crudeFatPercent: 7.0,
+    crudeFiberPercent: 3.5,
+    moisturePercent: 9.5,
+    inStock: true,
+    ingredients: [],
+    benefits: []
+  },
+  {
+    id: 'prod-canine-vigor-upcoming',
+    name: 'PET-VIGOR™ High-Protein Canine & Pet Nutrition (500g Pack)',
+    tagline: 'Functional Pet Food with Marine Peptides, Glucosamine & Omega-3 for Joint & Coat Health (Upcoming Animal Line)',
+    sku: 'PV-PET-500G',
+    category: 'animals',
+    targetSpecies: ['Dogs', 'Puppies', 'Household Pets'],
+    packWeightGrams: 500,
+    packSizeLabel: '500g Pack',
+    priceInr: 390,
+    imageUrl: '/channa_pellet.jpg',
+    pelletSizeMm: 'Extruded Kibble',
+    crudeProteinPercent: 28.0,
+    crudeFatPercent: 12.0,
+    crudeFiberPercent: 4.0,
+    moisturePercent: 10.0,
+    inStock: true,
+    ingredients: [],
+    benefits: []
+  },
+  {
+    id: 'prod-poultry-vigor-upcoming',
+    name: 'AVIAN-VIGOR™ Complete Poultry & Bird Nutrition (500g Pack)',
+    tagline: 'Digestive Enzyme Fortified Crumble for Backyard Poultry & Game Birds (Upcoming Animal Line)',
+    sku: 'AV-POULTRY-500G',
+    category: 'animals',
+    targetSpecies: ['Country Chickens (Naatu Kozhi)', 'Broilers', 'Quails', 'Birds'],
+    packWeightGrams: 500,
+    packSizeLabel: '500g Pack',
+    priceInr: 260,
+    imageUrl: '/channa_pellet.jpg',
+    pelletSizeMm: 'Micro-Crumb',
+    crudeProteinPercent: 22.0,
+    crudeFatPercent: 5.0,
+    crudeFiberPercent: 4.5,
+    moisturePercent: 10.0,
+    inStock: true,
+    ingredients: [],
+    benefits: []
   }
 ];
 
@@ -963,6 +1088,8 @@ export const INITIAL_FEEDBACK: Feedback[] = [
 // -------------------------------------------------------------
 // Seed Orders
 // -------------------------------------------------------------
+// Seed Orders (Packs-based, 100g at ₹130)
+// -------------------------------------------------------------
 export const INITIAL_ORDERS: Order[] = [
   {
     id: 'ord-01',
@@ -970,11 +1097,12 @@ export const INITIAL_ORDERS: Order[] = [
     farmerName: 'Murugan Ramanathan',
     contactPhone: '+91 98401 23456',
     district: 'Nagapattinam',
-    productId: 'prod-aquavigor-01',
-    productName: 'AquaVigor™ High-Performance Functional Feed',
-    quantityBags: 20,
-    bagSizeKg: 25,
-    totalPriceInr: 37000,
+    productId: 'prod-channa-100g',
+    productName: 'CHANNA PELLET™ 100g Retail Pack (2mm Pellet)',
+    quantityPacks: 20,
+    packSizeLabel: '100g Pack',
+    pricePerPackInr: 130,
+    totalPriceInr: 2600,
     deliveryAddress: 'Survey No. 42/B, Estuary Road, Velankanni Taluk, Nagapattinam',
     status: 'delivered',
     notes: 'Delivered in 24 hours. Gate contact: Murugan.',
@@ -986,11 +1114,12 @@ export const INITIAL_ORDERS: Order[] = [
     farmerName: 'Murugan Ramanathan',
     contactPhone: '+91 98401 23456',
     district: 'Nagapattinam',
-    productId: 'prod-aquavigor-01',
-    productName: 'AquaVigor™ High-Performance Functional Feed',
-    quantityBags: 30,
-    bagSizeKg: 25,
-    totalPriceInr: 55500,
+    productId: 'prod-channa-100g',
+    productName: 'CHANNA PELLET™ 100g Retail Pack (2mm Pellet)',
+    quantityPacks: 50,
+    packSizeLabel: '100g Pack',
+    pricePerPackInr: 130,
+    totalPriceInr: 6500,
     deliveryAddress: 'Survey No. 42/B, Estuary Road, Velankanni Taluk, Nagapattinam',
     status: 'dispatched',
     notes: 'Vehicle on route: TN-51-AB-4021. Driver Babu.',
@@ -1002,11 +1131,12 @@ export const INITIAL_ORDERS: Order[] = [
     farmerName: 'R. Veeramani',
     contactPhone: '+91 98403 45678',
     district: 'Cuddalore',
-    productId: 'prod-aquavigor-01',
-    productName: 'AquaVigor™ High-Performance Functional Feed',
-    quantityBags: 40,
-    bagSizeKg: 25,
-    totalPriceInr: 74000,
+    productId: 'prod-channa-100g',
+    productName: 'CHANNA PELLET™ 100g Retail Pack (2mm Pellet)',
+    quantityPacks: 100,
+    packSizeLabel: '100g Pack',
+    pricePerPackInr: 130,
+    totalPriceInr: 13000,
     deliveryAddress: 'Killai Coastal Farm, Chidambaram, Cuddalore',
     status: 'confirmed',
     createdAt: getDateDaysAgo(1)
@@ -1017,11 +1147,12 @@ export const INITIAL_ORDERS: Order[] = [
     farmerName: 'S. Muthuvel',
     contactPhone: '+91 98404 56789',
     district: 'Ramanathapuram',
-    productId: 'prod-aquavigor-01',
-    productName: 'AquaVigor™ High-Performance Functional Feed',
-    quantityBags: 15,
-    bagSizeKg: 25,
-    totalPriceInr: 27750,
+    productId: 'prod-channa-100g',
+    productName: 'CHANNA PELLET™ 100g Retail Pack (2mm Pellet)',
+    quantityPacks: 10,
+    packSizeLabel: '100g Pack',
+    pricePerPackInr: 130,
+    totalPriceInr: 1300,
     deliveryAddress: 'Mandapam Seashore Ponds, Ramanathapuram',
     status: 'requested',
     createdAt: getDateDaysAgo(0)
@@ -1037,8 +1168,18 @@ class StorageService {
   }
 
   private init() {
-    if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
+    const storedProds = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+    if (!storedProds) {
       localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
+    } else {
+      try {
+        const parsed = JSON.parse(storedProds);
+        if (!Array.isArray(parsed) || parsed.length === 0 || !parsed[0].packWeightGrams || parsed[0].priceInr !== 130) {
+          localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
+        }
+      } catch {
+        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
+      }
     }
     if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
@@ -1290,6 +1431,36 @@ class StorageService {
   // --- Products ---
   public getProducts(): Product[] {
     return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || '[]');
+  }
+
+  public addProduct(product: Omit<Product, 'id' | 'createdAt'>): Product {
+    const products = this.getProducts();
+    const newProduct: Product = {
+      ...product,
+      id: `prod-${Date.now().toString().slice(-6)}`,
+      inStock: product.inStock !== undefined ? product.inStock : true,
+      createdAt: new Date().toISOString()
+    };
+    products.unshift(newProduct);
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    return newProduct;
+  }
+
+  public updateProduct(productId: string, updates: Partial<Product>): Product | null {
+    const products = this.getProducts();
+    const index = products.findIndex(p => p.id === productId);
+    if (index === -1) return null;
+    products[index] = { ...products[index], ...updates };
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+    return products[index];
+  }
+
+  public deleteProduct(productId: string): boolean {
+    const products = this.getProducts();
+    const filtered = products.filter(p => p.id !== productId);
+    if (filtered.length === products.length) return false;
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(filtered));
+    return true;
   }
 
   // --- Offline Sync Queue ---

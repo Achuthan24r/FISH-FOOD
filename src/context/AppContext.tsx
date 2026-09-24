@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Language, Batch, Feedback, Order } from '../types';
+import { User, Language, Batch, Feedback, Order, Product } from '../types';
 import { storageService, INITIAL_USERS } from '../services/storage';
 import { translations } from '../i18n/translations';
 
@@ -28,6 +28,8 @@ interface AppContextType {
   refreshFeedback: () => void;
   orders: Order[];
   refreshOrders: () => void;
+  products: Product[];
+  refreshProducts: () => void;
   showFeedbackPrompt: boolean;
   feedbackPromptType: 'day30' | 'harvest' | null;
   openFeedbackModalWithPrompt: (promptType: 'day30' | 'harvest') => void;
@@ -53,6 +55,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [batches, setBatches] = useState<Batch[]>(() => storageService.getBatches());
   const [feedbackList, setFeedbackList] = useState<Feedback[]>(() => storageService.getFeedback());
   const [orders, setOrders] = useState<Order[]>(() => storageService.getOrders());
+  const [products, setProducts] = useState<Product[]>(() => storageService.getProducts());
   
   const [showFeedbackPrompt, setShowFeedbackPrompt] = useState<boolean>(true);
   const [feedbackPromptType, setFeedbackPromptType] = useState<'day30' | 'harvest' | null>('day30');
@@ -143,6 +146,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOrders(storageService.getOrders());
   };
 
+  const refreshProducts = () => {
+    setProducts(storageService.getProducts());
+  };
+
   const showToast = (message: string, type: 'success' | 'info' | 'error' = 'info') => {
     const id = `toast-${Date.now()}-${Math.random()}`;
     setToasts(prev => [...prev, { id, message, type }]);
@@ -167,6 +174,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBatches(storageService.getBatches());
     setFeedbackList(storageService.getFeedback());
     setOrders(storageService.getOrders());
+    setProducts(storageService.getProducts());
     setOfflineQueueCount(0);
     setShowFeedbackPrompt(true);
     setCurrentTab('home');
@@ -196,6 +204,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         refreshFeedback,
         orders,
         refreshOrders,
+        products,
+        refreshProducts,
         showFeedbackPrompt,
         feedbackPromptType,
         openFeedbackModalWithPrompt,

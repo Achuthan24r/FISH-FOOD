@@ -16,15 +16,23 @@ import {
 } from 'lucide-react';
 
 export const ProductScreen: React.FC = () => {
-  const { t, setCurrentTab, lang } = useApp();
-  const product = INITIAL_PRODUCTS[0];
+  const { t, setCurrentTab, lang, products } = useApp();
+  const product = products.find(p => p.id === 'prod-channa-100g') || products[0] || INITIAL_PRODUCTS[0];
 
   const [activeIngredientCategory, setActiveIngredientCategory] = useState<string>('all');
-  const [selectedPackSize, setSelectedPackSize] = useState<'100g' | '25kg'>('100g');
+  const [selectedPackSize, setSelectedPackSize] = useState<string>('100g');
+  const [catalogFilter, setCatalogFilter] = useState<'all' | 'fish' | 'animals'>('all');
 
   const filteredIngredients = activeIngredientCategory === 'all'
-    ? product.ingredients
-    : product.ingredients.filter(ing => ing.category === activeIngredientCategory);
+    ? (product.ingredients || [])
+    : (product.ingredients || []).filter(ing => ing.category === activeIngredientCategory);
+
+  const displayedCatalogProducts = products.filter(p => {
+    if (catalogFilter === 'all') return true;
+    if (catalogFilter === 'fish') return p.category === 'carnivorous' || p.category === 'fish' || p.category === 'shrimp';
+    if (catalogFilter === 'animals') return p.category === 'animals' || p.category === 'pets';
+    return true;
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24 space-y-8 animate-fade-in">
@@ -135,7 +143,7 @@ export const ProductScreen: React.FC = () => {
             </div>
 
             {/* Pack Size Selector */}
-            <div className="flex gap-2 mt-4">
+            <div className="flex flex-wrap gap-2 mt-4 justify-center">
               <button
                 onClick={() => setSelectedPackSize('100g')}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
@@ -144,17 +152,37 @@ export const ProductScreen: React.FC = () => {
                     : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
-                100 g Retail Pack (₹120)
+                100g Pack (₹130) • Retail Pack
               </button>
               <button
-                onClick={() => setSelectedPackSize('25kg')}
+                onClick={() => setSelectedPackSize('250g')}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
-                  selectedPackSize === '25kg'
+                  selectedPackSize === '250g'
                     ? 'bg-[#F2A900] text-[#14342A] shadow-md'
                     : 'bg-white/10 text-white hover:bg-white/20'
                 }`}
               >
-                25 kg Farm Moisture Bag (₹1,850)
+                250g Pack (₹300)
+              </button>
+              <button
+                onClick={() => setSelectedPackSize('500g')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  selectedPackSize === '500g'
+                    ? 'bg-[#F2A900] text-[#14342A] shadow-md'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                500g Pack (₹550)
+              </button>
+              <button
+                onClick={() => setSelectedPackSize('1kg')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                  selectedPackSize === '1kg'
+                    ? 'bg-[#F2A900] text-[#14342A] shadow-md'
+                    : 'bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                1kg Pack (₹990)
               </button>
             </div>
           </div>
@@ -374,7 +402,7 @@ export const ProductScreen: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {product.feedingStages.map((stage, sIdx) => (
+              {(product.feedingStages || []).map((stage, sIdx) => (
                 <tr key={sIdx} className="hover:bg-emerald-50/50 transition">
                   <td className="py-3.5 px-4 font-semibold text-[#14342A]">
                     <div>{stage.stage}</div>
@@ -396,6 +424,148 @@ export const ProductScreen: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* 5. Complete Product Range & Upcoming Animal Nutrition Line */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/80 space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+                Product Lineup
+              </span>
+              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider">
+                Fish Food Now • Animal & Pet Nutrition Expansion
+              </span>
+            </div>
+            <h2 className="font-heading font-black text-2xl text-[#14342A] mt-2">
+              Pack Offerings & Future Animal Line
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+              Engineered primarily for predatory and commercial aquaculture (Channa, Murrel, Asian Seabass, Shrimp). Expanding into high-protein animal and pet functional foods.
+            </p>
+          </div>
+
+          {/* Filter Tabs */}
+          <div className="flex flex-wrap gap-2 text-xs font-bold">
+            <button
+              onClick={() => setCatalogFilter('all')}
+              className={`px-3.5 py-1.5 rounded-xl transition ${
+                catalogFilter === 'all'
+                  ? 'bg-[#14342A] text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              All Products ({products.length})
+            </button>
+            <button
+              onClick={() => setCatalogFilter('fish')}
+              className={`px-3.5 py-1.5 rounded-xl transition ${
+                catalogFilter === 'fish'
+                  ? 'bg-[#2E7D4F] text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              🐟 Fish & Aquaculture
+            </button>
+            <button
+              onClick={() => setCatalogFilter('animals')}
+              className={`px-3.5 py-1.5 rounded-xl transition ${
+                catalogFilter === 'animals'
+                  ? 'bg-amber-600 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              🐾 Pet & Animal Line (Upcoming)
+            </button>
+          </div>
+        </div>
+
+        {/* Product Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+          {displayedCatalogProducts.map((prod) => (
+            <div
+              key={prod.id}
+              className="bg-sand-50/70 rounded-3xl p-5 border border-slate-200/90 hover:border-[#2E7D4F] transition flex flex-col justify-between shadow-sm hover:shadow-md"
+            >
+              <div className="space-y-3">
+                <div className="relative rounded-2xl overflow-hidden h-44 bg-slate-900 border border-slate-200">
+                  <img
+                    src={prod.imageUrl || '/channa_pellet.jpg'}
+                    alt={prod.name}
+                    className="w-full h-full object-cover object-center"
+                  />
+                  <div className="absolute top-2.5 left-2.5">
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      prod.category === 'animals' || prod.category === 'pets'
+                        ? 'bg-[#F2A900] text-[#14342A]'
+                        : 'bg-[#14342A] text-white'
+                    }`}>
+                      {prod.category === 'animals' ? '🐾 Animal Line' :
+                       prod.category === 'pets' ? '🐶 Pet Line' :
+                       prod.category === 'carnivorous' ? '🐟 Carnivorous Fish' : '🦐 Shrimp Feed'}
+                    </span>
+                  </div>
+
+                  <div className="absolute bottom-2.5 right-2.5">
+                    <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[#14342A] text-xs font-black shadow-sm">
+                      {prod.packSizeLabel || `${prod.packWeightGrams}g Pack`}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-heading font-bold text-base text-[#14342A] line-clamp-1">
+                    {prod.name}
+                  </h3>
+                  {prod.tagline && (
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                      {prod.tagline}
+                    </p>
+                  )}
+                </div>
+
+                {/* Specs Pill Grid */}
+                <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                  <div className="p-2 rounded-xl bg-white border border-slate-200">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Protein</span>
+                    <span className="font-bold text-[#14342A]">{prod.crudeProteinPercent}% Crude</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white border border-slate-200">
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Size</span>
+                    <span className="font-bold text-[#14342A]">{prod.pelletSizeMm || 'Pellet'}</span>
+                  </div>
+                </div>
+
+                {/* Target Species */}
+                <div className="text-[11px] text-slate-600">
+                  <span className="font-bold text-[#14342A]">Target Species: </span>
+                  <span>{prod.targetSpecies ? prod.targetSpecies.join(', ') : 'Aqua/Animals'}</span>
+                </div>
+              </div>
+
+              {/* Price & Action Button */}
+              <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Pack Price</span>
+                  <span className="text-xl font-heading font-black text-[#2E7D4F]">
+                    ₹{prod.priceInr.toLocaleString()}
+                  </span>
+                  <span className="text-[10px] text-slate-500 ml-1">/ {prod.packSizeLabel || `${prod.packWeightGrams}g`}</span>
+                </div>
+
+                <button
+                  onClick={() => setCurrentTab('orders')}
+                  className="px-4 py-2.5 rounded-xl bg-[#2E7D4F] hover:bg-[#215c3a] text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>Order Now</span>
+                </button>
+              </div>
+
+            </div>
+          ))}
         </div>
       </div>
 
